@@ -108,7 +108,7 @@ for idx, partition in enumerate(chain):
 
     all_party_seats.append(elec_result.seats(partytofavor))
 
-fname = 'chains/'+partytofavor+'efficiency_gap_'+str(num_steps)
+fname = 'chains/'+partytofavor+'_efficiency_gap_'+str(num_steps)
 #fname = 'chains/'+partytofavor+'safe_seats_'+str(num_steps)
 
 with open(fname +'.pkl', 'wb') as f:
