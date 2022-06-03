@@ -1,3 +1,3 @@
-partytofavor = "Democratic"
+party_to_favor = "Republican"
 election_name = 'PRES16' 
-bias_for_second_party = False
+bias_measure = 'partisan_bias'
