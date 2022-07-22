@@ -1,3 +1,3 @@
-party_to_favor = "Republican"
+party_to_favor = "Democratic"
 election_name = 'PRES16' 
-bias_measure = 'partisan_bias'
+bias_measure = 'safe_seats'

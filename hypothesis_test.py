@@ -79,4 +79,4 @@ def test_hypothesis(markov_chain,p,epsilon,k,w,election_name):
 
     counts = sum(w_vals[1:]> w_vals[0])
 
-    return counts <= epsilon*(k+1), (counts,all_results)
+    return counts <= epsilon*(k+1), (counts, all_results), w_vals

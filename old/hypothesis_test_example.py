@@ -4,13 +4,17 @@ import matplotlib.pyplot as plt
 from functools import partial
 import pandas as pd
 
-from gerrychain import (GeographicPartition, Graph, MarkovChain,
+import hypothesis_test as hp
+
+from gerrychain import (GeographicPartition, Graph, MarkovChain,accept,
                         updaters, constraints, Election)
-from gerrychain.proposals import recom
+from gerrychain.proposals import recom, propose_random_flip
 import geopandas as gpd
 
 from biased_accept import increase_safe_seats, increase_efficiency_gap, get_elec_results
-from settings import partytofavor, election_name
+from settings import party_to_favor, election_name, bias_measure
+
+from tqdm import tqdm
 
 # read in the shapefile as a dataframe
 pa_vtds = gpd.read_file("./data/PA/PA.shp")
@@ -62,7 +66,7 @@ pop_constraint = constraints.within_percent_of_ideal_population(initial_partitio
 # see also https://gerrychain.readthedocs.io/en/latest/api.html#module-gerrychain.constraints
 
 
-num_steps = 3000
+num_steps = 10
 
 chain = MarkovChain(
     proposal=proposal,
@@ -77,10 +81,61 @@ chain = MarkovChain(
     total_steps=num_steps
 )
 
-fname = './chains/'+partytofavor+'efficiency_gap_'+str(num_steps)+'.pkl'
+all_partitions = [] # keep track of the actual partitions
+all_percents = [] # keep track of the democratic percentages
+all_safe_seats = []
+partisan_metric_values = [] # keep track of the partisan metrics
+all_assignments = [] # something pickle-able
+all_party_seats = []
 
-with open(fname, 'rb') as f:
-    x = pickle.load(f)
+#for partition in chain.with_progress_bar():
+for idx, partition in tqdm(enumerate(chain)):
+    if idx % 50 == 0:
+        print('.', end='')
+    all_partitions.append(partition)
 
-#read out the plans
-all_partitions = [[xx[i] for i in range(len(graph))] for xx in x]
+    all_assignments.append(partition.assignment)
+
+    elec_result = get_elec_results(partition)
+    partisan_metric_values.append([
+        elec_result.efficiency_gap(),
+        elec_result.mean_median(),
+        elec_result.partisan_bias(),
+        elec_result.partisan_gini(),
+        elec_result.mean_thirdian()
+        ])
+
+    safe_seats = len([x for x in partition[election_name].percents(party_to_favor) if x > 0.53])
+    all_safe_seats.append(safe_seats)
+
+    all_percents.append(sorted(partition[election_name].percents(party_to_favor)))
+
+    all_party_seats.append(elec_result.seats(party_to_favor))
+
+
+"""
+run the hypothesis test
+"""
+
+#identify a chain of interest
+init_partition = all_partitions[-1]
+k = 10
+epsilon = 0.1
+
+#set up the new chain
+hypo_chain = MarkovChain(
+    proposal=propose_random_flip,
+    constraints=[
+        # constraints.single_flip_contiguous
+        pop_constraint,
+        compactness_bound
+    ],
+    accept = accept.always_accept,
+    initial_state=init_partition,
+    total_steps=k+1
+)
+
+#run the hypothesis test
+res = hp.test_hypothesis(hypo_chain,init_partition,epsilon,k,hp.partisan_bias,election_name)
+
+print(f"hypothesis is: {res[0]}")
