@@ -64,7 +64,7 @@ hypo_chain = MarkovChain(
     total_steps=k+1
 )
 
-#run the hypothesis test
+#run the hypothesis test v1
 res = hp.test_hypothesis(
     hypo_chain,
     test_partition,
@@ -74,6 +74,26 @@ res = hp.test_hypothesis(
     election_name
     )
 
-print(f"hypothesis is: {res[0]}")
-print(res[1][0])
+print(f"tested map using label function partisan bias is epsilon-outlier: {res[0]}")
+print(res[1])
 # print(res[-1])
+
+# random parameters
+m = 100
+alpha = 0.1
+r = 0.1
+
+#run the hypothesis test v2
+res = hp.test_hypothesis_v2(
+    hypo_chain,
+    test_partition,
+    epsilon,
+    m,
+    alpha,
+    r,
+    k,
+    hp.partisan_bias,
+    election_name
+    )
+
+

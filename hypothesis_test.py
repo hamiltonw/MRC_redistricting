@@ -77,6 +77,53 @@ def test_hypothesis(markov_chain,p,epsilon,k,w,election_name):
 
     #(4) Call the original districting “carefully crafted” or “gerrymandered” if the overwhelming majority of districtings produced by making small random changes are less partisan than the original districting.
 
-    counts = sum(w_vals[1:]> w_vals[0])
+    counts = sum(w_vals[1:] <= w_vals[0])
 
+    # w_vals[0] is an epsilon outlier if counts <= epsilon(k+1)
     return counts <= epsilon*(k+1), (counts, all_results), w_vals
+
+
+def test_hypothesis_v2(markov_chain,p,epsilon,m,alpha,r,k,w,election_name):
+    """
+    :param p: partition of interest
+    :param epsilon: significance parameter
+    :param m: 
+    :param alpha: 
+    :param r: 
+    :param k: number of steps
+    :param w: function to evaluate plans in the trajectory on and evaluate outlierness
+    :param markov_chain: the markov chain to use
+    :param election_name: name of the election to use in computing w(plans)
+    """
+
+    # run M independent trajectories
+    rho = 0
+
+    for traj in range(m):
+
+        #(1) Beginning from the districting being evaluated,
+        markov_chain.initial_state = p
+        markov_chain.total_steps = k + 1
+
+        #(2) Make a sequence of random changes to the districting, while preserving some set of constraints imposed on the districtings.
+
+        all_results = [None for i in range(k+1)] #set some space for each plan
+
+        for idx, partition in tqdm(enumerate(markov_chain)): #run the chain 
+            all_results[idx] = partition
+
+        #(3) Evaluate the partisan properties of each districting encountered (e.g., by simulating elections using past voting data).
+
+        w_vals = np.array([w(p[election_name]) for p in all_results])
+
+        #(4) Call the original districting “carefully crafted” or “gerrymandered” if the overwhelming majority of districtings produced by making small random changes are less partisan than the original districting.
+
+        counts = sum(w_vals[1:] <= w_vals[0])
+
+        # if epsilon-outlier, increase rho by 1
+        if counts <= epsilon*(k+1):
+            rho += 1
+    
+    # rho >= m*np.sqrt(2*epsilon/alpha) + r
+
+    return 1 - rho/m >= alpha, (rho, all_results), w_vals
