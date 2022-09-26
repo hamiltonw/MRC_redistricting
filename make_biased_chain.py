@@ -44,7 +44,7 @@ pop_constraint = constraints.within_percent_of_ideal_population(initial_partitio
 # see also https://gerrychain.readthedocs.io/en/latest/api.html#module-gerrychain.constraints
 
 
-num_steps = 3000 
+num_steps = 100 
 
 chain = MarkovChain(
     proposal=proposal,

@@ -46,13 +46,13 @@ test_partition.plot(cmap="tab20", ax=ax)
 plt.axis('off')
 plt.title('plan to be tested: '+str(idx)+'th in biased chain' )
 plt.xlabel(fname)
-plt.show()
+#plt.show()
 
 
 
 # run the hypothesis test
 
-k = 100
+k = 10000
 epsilon = 0.1
 
 #set up the new chain
