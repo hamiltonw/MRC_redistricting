@@ -1,38 +1,79 @@
 import matplotlib.pyplot as plt
-from settings import party_to_favor
 from gerrychain import (GeographicPartition, Graph, MarkovChain,
                         updaters, constraints, Election)
 from gerrychain.proposals import recom
 import geopandas as gpd
 
-def read_PA_data(path):
-
+def read_geodata(path):
     # read in the shapefile as a dataframe
-    pa_vtds = gpd.read_file(path)
-
+    vtds = gpd.read_file(path)
+    print(path, 'has columns:', vtds.columns)
     # convert the dataframe to a gerrychain-viable object
-    graph = Graph.from_geodataframe(pa_vtds)
+    graph = Graph.from_geodataframe(vtds, ignore_errors=True)
     return graph
 
-def get_elections(party_to_favor, election_name):
-    if party_to_favor == "Democratic":
-        elections_dict = {
-            "SEN10" : {"Democratic": "SEN10D", "Republican": "SEN10R"},
-            "SEN12" : {"Democratic": "USS12D", "Republican": "USS12R"},
-            "SEN16" : {"Democratic": "T16SEND", "Republican": "T16SENR"},
-            "PRES12" : {"Democratic": "PRES12D", "Republican": "PRES12R"},
-            "PRES16" : {"Democratic": "T16PRESD", "Republican": "T16PRESR"}
-        }
-    elif party_to_favor == "Republican":
+#def read_PA_data(path):
+#    return read_geodata(path)
+#
+#def get_bias_metrics(bias_metric):
+#    
+#    bias_metric_dict = {
+#            "partisan_bias" : hp.partisan_bias,
+#            "partisan_gini" : hp.partisan_gini,
+#            "mean_thirdian" : hp.mean_thirdian,
+#            "efficiency_gap" : hp.efficiency_gap,
+#            "mean_median" : hp.mean_median
+#        }
+#
+#    return bias_metric_dict[bias_metric]
+
+def get_elections(party_to_favor, election_name, state="PA"):
+    if state == "PA":
         elections_dict = {
             "SEN10" : {"Republican": "SEN10R", "Democratic": "SEN10D"},
             "SEN12" : {"Republican": "USS12R", "Democratic": "USS12D"},
             "SEN16" : {"Republican": "T16SENR", "Democratic": "T16SEND"},
             "PRES12" : {"Republican": "PRES12R", "Democratic": "PRES12D"},
             "PRES16" : {"Republican": "T16PRESR", "Democratic": "T16PRESD"}
-        } 
+        }
+    elif state == "TX":
+        elections_dict = {
+            "SEN12" : {"Republican": "SEN12R", "Democratic": "SEN12D"},
+            "SEN14" : {"Republican": "SEN14R", "Democratic": "SEN14D"},
+            "PRES12" : {"Republican": "PRES12R", "Democratic": "PRES12D"},
+            "PRES16" : {"Republican": "PRES16R", "Democratic": "PRES16D"}
+        }
+    elif state == "MD":
+        elections_dict = { 
+            "SEN12" : {"Republican": "SEN12R", "Democratic": "SEN12D"},
+            "SEN16" : {"Republican": "SEN16R", "Democratic": "SEN16D"},
+            "SEN18" : {"Republican": "SEN18R", "Democratic": "SEN18D"},
+            "PRES12" : {"Republican": "PRES12R", "Democratic": "PRES12D"},
+            "PRES16" : {"Republican": "PRES16R", "Democratic": "PRES16D"}
+        }
+    elif state == "WI":
+        elections_dict = {
+            "SEN12" : {"Republican": "SEN12R", "Democratic": "SEN12D"},
+            "SEN16" : {"Republican": "SEN16R", "Democratic": "SEN16D"},
+            "SEN18" : {"Republican": "SEN18R", "Democratic": "SEN18D"},
+            "PRES12" : {"Republican": "PRES12R", "Democratic": "PRES12D"},
+            "PRES16" : {"Republican": "PRES16R", "Democratic": "PRES16D"}
+        }
+    elif state == "NC":
+       elections_dict = { 
+            "SEN14" : {"Republican": "EL14G_USS_", "Democratic": "EL14G_US_1"},
+            "SEN16" : {"Republican": "EL16G_USS_", "Democratic": "EL16G_US_1"},
+            "PRES12" : {"Republican": "EL12G_PR_R", "Democratic": "EL12G_PR_D"},
+            "PRES16" : {"Republican": "EL16G_PR_R", "Democratic": "EL16G_PR_D"}
+        }
     else:
         raise Exception
+
+    if party_to_favor == "Democratic":
+        tmp = {}
+        for k, v in elections_dict.items():
+            tmp[k] = {"Democratic": v["Democratic"], "Republican": v["Republican"]}
+        elections_dict = tmp.copy()
 
     elections = [Election(election_name, elections_dict[election_name])]
     print([(e.name, e.parties) for e in elections])
@@ -43,8 +84,9 @@ def get_elections(party_to_favor, election_name):
     election_updaters = {election.name: election for election in elections}
 
     return election_updaters
+ 
     
-def plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_seats, fname):
+def plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_seats, fname, party_to_favor=None):
 
     fig = plt.figure(figsize=(15, 5))
 
@@ -63,14 +105,14 @@ def plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_se
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
 
     ax = fig.add_subplot(1,3,2)
-    ax.plot(partisan_metric_values)
+    ax.plot(np.arange(0, len(partisan_metric_values), 10), partisan_metric_values[::10], alpha=0.5)
     ax.set_title('Partisan metric values')
     ax.set_xlabel('Steps on MCMC chain')
     ax.legend(['efficiency gap', 'mean median', 'partisan bias', 'partisan gini', 'mean thirdian'])
 
     ax = fig.add_subplot(1,3,3)
-    ax.plot(all_safe_seats)
-    ax.plot(all_party_seats)
+    ax.plot(np.arange(0, len(partisan_metric_values), 10), all_safe_seats[::10], alpha=0.5)
+    ax.plot(np.arange(0, len(partisan_metric_values), 10), all_party_seats[::10], alpha=0.5)
     ax.legend(['safe seats', 'seats won'])
     ax.set_xlabel('Steps on MCMC chain')
     ax.set_title('# of seats for ' + party_to_favor)
