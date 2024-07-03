@@ -6,8 +6,10 @@ import csv
 from argparse import ArgumentParser
 
 def test_hypothesis(w_vals, epsilon, alpha, verbose=True):
-    m = w_vals.shape[0]
-    k = w_vals.shape[1]
+    m = w_vals.shape[0] # number of parallel trajectories
+    k = w_vals.shape[1] # number of steps in trajectory
+    
+    # are we checking only one metric or more?
     if len(w_vals.shape) > 2:
         mn = w_vals.shape[2]
     else:
@@ -17,9 +19,10 @@ def test_hypothesis(w_vals, epsilon, alpha, verbose=True):
         print(m, 'trajectories,', k, 'steps')
         print('epsilon', epsilon, 'alpha', alpha)
 
+    # how many are lower than the starting value?
     counts = np.sum(w_vals[:, 1:, :] < w_vals[:, 0, :].reshape(m, 1, mn), axis=1)
-    rho_lower = np.sum(counts < epsilon*k, axis=0)
-    rho_upper = np.sum(counts > (1-epsilon)*k, axis=0)
+    rho_lower = np.sum(counts < epsilon*k, axis=0) # lower epsilon outlier
+    rho_upper = np.sum(counts > (1-epsilon)*k, axis=0) # upper epsilon outlier
 
     # calculate p-value from Theorem 3.1
     r = rho_lower - m*np.sqrt(2*epsilon/alpha)
@@ -40,12 +43,15 @@ def main(args):
     alphas = [float(x) for x in args.a.split(",")]
     
     if os.path.isfile(args.fn):
+        # fn is a single file
         fns = [args.fn]
         csv_fn = args.fn[:-4]
     elif os.path.isdir(args.fn):
+        # if fn is a folder, take all pickle files in the folder
         fns = glob.glob(os.path.join(args.fn, "*.pkl"))
         csv_fn = args.fn + 'results'
     else:
+        # all files that match fn. can handle regex 
         fns = glob.glob(args.fn)
         csv_fn = args.fn[:-4]
 
@@ -89,6 +95,8 @@ def main(args):
             for alpha in alphas:
                 (rho_upper, p_upper), (rho_lower, p_lower) = test_hypothesis(w_vals, ep, alpha)
                 print(p_upper <= alpha, p_lower <= alpha)
+                
+                # when is p-value less than alpha?
                 p_upper_count[(ep, alpha)] += p_upper <= alpha
                 p_lower_count[(ep, alpha)] += p_lower <= alpha
 
