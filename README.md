@@ -1,16 +1,30 @@
 # MRC Redistricting project
 
 ## Structure
+This code relies heavily on consistent naming of the files.
   1. Making unbiased and biased chains
-     - `make_unbiased_chains.sh` runs `make_unbiased_chain.py`
-     - `make_hill_chains.sh` runs `make_hill_chains.py`
-     - `make_shorburst_chains.sh` runs `make_shortburst_chain.py`
+     - `make_unbiased_chains.sh` runs `make_unbiased_chain.py`.
+         - Saves `unbiased_chains/{state}/unbiased_{election}_{n}.pkl`. 
+     - `make_hill_chains.sh` runs `make_hill_chains.py`.
+         - Saves chain data in `biased_chains/{state}/hill_{election}_{party}_{bias}_{n}_{id}.pkl`. `id` comes from current time.
+         - Saves bias metric values in `biased_chains/{state}/hill_{election}_{party}_{bias}_{n}_{id}_lines.pdf`.
+     - `make_shorburst_chains.sh` runs `make_shortburst_chain.py`.
+         - Files saved are the same as hill climbing, except they start with `shortburst` instead of `hill`.
+           
   3. For a given state, calcualte metrics and generate figures for all chains
-     - `calculate_metrics.sh` runs `calculate_metrics.py`, `make_hists.py`, `make_heats.py`, `make_scats.py`
+     - `calculate_metrics.sh` runs `calculate_metrics.py`, `make_hists.py`, `make_heats.py`, `make_scats.py`.
+     - Calculated metrics are saved in `biased_chains/{state}/hill_{election}_{party}_{bias}_{n}_{id}-metrics.pkl` or `biased_chains/{state}/hill_{election}_{party}_{bias}_{n}_{id}-{the other party}-metrics.pkl`.
+     - Plot of metrics are in `biased_chains/{state}/hill_{election}_{party}_{bias}_{n}_{id}-plot.pdf`.
+     - Histograms, correlation heatmaps and scatter plots are in `biased_chains/{state}/{folder}/{metric biased towards}/{shortburst}-{metric used to compare histograms}.pdf`, `biased_chains/{state}/{folder}/{party}-correlation.pdf` and `biased_chains/{state}/{folder}/scatter.pdf`.
+    
+    
   5. Run multiple trajectories for hypothesis test
-     - `run_hp_from_scratch.sh` runs `run_hp_from_scratch.py`
+     - `run_hp_from_scratch.sh` runs `run_hp_from_scratch.py`.
+     - Sample 100 maps from the chain in `fn` (an output of first step), then save the results in `hp/{fn}_{map_idx}_{id}.pkl`. Each of this file contains `m` trajectories.
+       
   7. Read results from multiple trajectories and perform hypothesis test
-     - `read_hp_results.sh` runs `read_hp_results.py`
+     - `read_hp_results.sh` runs `read_hp_results.py`.
+     - Read the trajectories saved from the earlier step and save results in `{fn}_{ep}_{alpha}.csv`.
 
 ## Common parameters
 | Parameter             | Explanation | Examples |
