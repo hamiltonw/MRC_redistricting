@@ -205,10 +205,6 @@ def main(args):
                          elec_result.election.parties_to_columns), f, pickle.HIGHEST_PROTOCOL)
             print('metrics saved to', folder, fname + f'-{party_to_favor}-metrics.pkl')
             
-            data = pd.DataFrame(all_percents) #convert to a pd dataframe
-            utils.plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_seats, os.path.join(folder, fname+'-plot'), party_to_favor)
-
-        
 if __name__ == "__main__":
     parser = ArgumentParser(description="calculate and save metrics")
     parser.add_argument("--state", type=str, default="NC",
