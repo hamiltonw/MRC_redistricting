@@ -92,12 +92,17 @@ def run(first_party, election_name, election, my_updaters, all_assignments, all_
     all_percents = [] # keep track of the democratic percentages
     all_party_seats = []
 
+    if first_party == 'Republican':
+        parties = [first_party, 'Democratic']
+    else:
+        parties = [first_party, 'Republican']
+
     for idx in range(len(all_assignments)):
         elec_result = ElectionResults(election, all_election_results[idx], all_assignments[idx].parts)
         partition = GeographicPartition(graph, all_assignments[idx], updaters=my_updaters)
 
         partisan_metric_values.append([
-            efficiency_gap(elec_result, election.parties[::-1]), 
+            efficiency_gap(elec_result, parties), 
             mean_median(elec_result, first_party), 
             partisan_bias(elec_result, first_party),
             elec_result.partisan_gini(),
@@ -125,7 +130,8 @@ def main(args):
         biased = folder.startswith("biased_chains/")
         print(folder, biased)
         if biased:
-            fns = glob.glob(os.path.join(folder, "shortburst_*_10000_*[0-9].pkl"))
+            fns = glob.glob(os.path.join(folder, "hill_*_50000_*[0-9].pkl"))
+            fns += glob.glob(os.path.join(folder, "shortburst_*_10000_*[0-9].pkl"))
         else:
             fns = glob.glob(os.path.join(folder, "unbiased_*_50000.pkl"))
         print(fns)
@@ -142,9 +148,15 @@ def main(args):
             
             print(fname)
             
-            if biased:
+            if biased and 'shortburst' in fname:
                 with open(os.path.join(folder, fname+'.pkl'), 'rb') as f:
                     all_assignments, all_election_results, all_scores, races = pickle.load(f)
+                
+                L = fname.split('_')
+                election_name, party_to_favor = L[1], L[2]
+            elif biased and 'hill' in fname:
+                with open(os.path.join(folder, fname+'.pkl'), 'rb') as f:
+                    all_assignments, all_election_results, all_scores, races, args, all_stats = pickle.load(f)
                 
                 L = fname.split('_')
                 election_name, party_to_favor = L[1], L[2]
@@ -185,21 +197,21 @@ def main(args):
             partisan_metric_values, all_safe_seats, all_percents, all_party_seats, elec_result = run(
                 party_to_favor, election_name, election, my_updaters, all_assignments, all_election_results, graph)
             
-            with open(os.path.join(folder, fname + '-'+str(party_to_favor)+ '-metrics.pkl'), 'wb') as f:
+            with open(os.path.join(folder, fname + f'-{party_to_favor}-metrics.pkl'), 'wb') as f:
                 pickle.dump((partisan_metric_values, 
                          all_safe_seats, 
                          all_percents,
                          all_party_seats,
                          elec_result.election.parties_to_columns), f, pickle.HIGHEST_PROTOCOL)
-            print('metrics saved to', folder, fname + '-'+str(party_to_favor)+ '-metrics.pkl')
+            print('metrics saved to', folder, fname + f'-{party_to_favor}-metrics.pkl')
             
             data = pd.DataFrame(all_percents) #convert to a pd dataframe
-            utils.plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_seats, os.path.join(folder, fname+'-plot'))
+            utils.plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_seats, os.path.join(folder, fname+'-plot'), party_to_favor)
 
         
 if __name__ == "__main__":
     parser = ArgumentParser(description="calculate and save metrics")
-    parser.add_argument("--state", type=str, default="PA",
+    parser.add_argument("--state", type=str, default="NC",
         help="state")
     args = parser.parse_args()
     
