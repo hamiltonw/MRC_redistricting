@@ -51,7 +51,7 @@ Shows up in `run_hp_from_scratch.py` and `read_hp_results.py`.
 | `fn` | File name | See below |
 
 #### Notes on `run_hp_from_scratch.py`:
-  - Where do we control parameter 100, i.e. how many maps to sample from a given chain? In the header of `run_hp_from_scratch.sh`, there's a slurm parameter `#SBATCH --array=1-100\%50`. This means run 100 of the same script in parallel but no more than 50 at a time[^5].
+  - Where do we control parameter 100, i.e. how many maps to sample from a given chain? In the header of `run_hp_from_scratch.sh`, there's a slurm parameter `#SBATCH --array=1-100%50`. This means run 100 of the same script in parallel but no more than 50 at a time[^5].
 - `fn` should be the path to where the (un)biased chain is. For example, `biased_chains/NC/shortburst_PRES16_Republican_partisan_gini_10000_1719440281.pkl` or `unbiased_chains/NC/unbiased_PRES16_50000.pkl`.
   
 #### Notes on `read_hp_results.py`:
