@@ -3,6 +3,7 @@ from gerrychain import (GeographicPartition, Graph, MarkovChain,
                         updaters, constraints, Election)
 from gerrychain.proposals import recom
 import geopandas as gpd
+import numpy as np
 
 def read_geodata(path):
     # read in the shapefile as a dataframe
@@ -11,21 +12,6 @@ def read_geodata(path):
     # convert the dataframe to a gerrychain-viable object
     graph = Graph.from_geodataframe(vtds, ignore_errors=True)
     return graph
-
-#def read_PA_data(path):
-#    return read_geodata(path)
-#
-#def get_bias_metrics(bias_metric):
-#    
-#    bias_metric_dict = {
-#            "partisan_bias" : hp.partisan_bias,
-#            "partisan_gini" : hp.partisan_gini,
-#            "mean_thirdian" : hp.mean_thirdian,
-#            "efficiency_gap" : hp.efficiency_gap,
-#            "mean_median" : hp.mean_median
-#        }
-#
-#    return bias_metric_dict[bias_metric]
 
 def get_elections(party_to_favor, election_name, state="PA"):
     if state == "PA":
