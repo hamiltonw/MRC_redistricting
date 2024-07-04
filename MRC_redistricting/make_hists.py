@@ -26,19 +26,22 @@ def get_metrics_files(args):
     assert len(Neutral) == 1
     print(Rep, Dem, Neutral)
 
-    rep_values = load_metrics_file(Rep[0])
-    dem_values = load_metrics_file(Dem[0])
-    neu_values = load_metrics_file(Neutral[0])
+    rep_values = load_metrics_file(Rep[0], args, True)
+    dem_values = load_metrics_file(Dem[0], args, True)
+    neu_values = load_metrics_file(Neutral[0], args, False)
 
     return rep_values, dem_values, neu_values
 
-def load_metrics_file(fname):
+def load_metrics_file(fname, args, plot=True):
     with open(fname, 'rb') as f:
             partisan_metric_values, all_safe_seats, all_percents, all_party_seats, races = pickle.load(f)
     metric_values = np.array(partisan_metric_values)
     metric_values = np.hstack((metric_values, np.array(all_safe_seats).reshape(-1,1)))
     
     print(metric_values.shape)
+    
+    if plot:
+        utils.plot_bias_metrics(pd.DataFrame(all_percents), partisan_metric_values, all_safe_seats, all_party_seats, f'{fname[:-4]}-plot', args['party'])
     return metric_values
 
 def plot_hist(r, d, ne, metric1, metric2, path, args):
