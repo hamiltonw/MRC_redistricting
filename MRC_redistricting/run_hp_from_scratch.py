@@ -1,3 +1,4 @@
+import numpy as np
 import pickle
 from functools import partial
 import pandas as pd
@@ -22,7 +23,6 @@ def main(args):
     
     state = fname.split("/")[1]
     election_name = fname.split("_")[2]
-
     if biased:
         party_to_favor = fname.split("_")[3]
     else:

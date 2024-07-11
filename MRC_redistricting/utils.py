@@ -85,14 +85,14 @@ def plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_se
     plt.plot(data.iloc[0], "ro")
     # Annotate
     ax.set_title("Comparing the plan to an ensemble")
-    ax.set_ylabel("Democratic vote %")
+    ax.set_ylabel(f"{party_to_favor} vote %")
     ax.set_xlabel("Sorted districts")
     ax.set_ylim(0, 1)
     ax.set_yticks([0, 0.25, 0.5, 0.75, 1])
 
     ax = fig.add_subplot(1,3,2)
     ax.plot(np.arange(0, len(partisan_metric_values), 10), partisan_metric_values[::10], alpha=0.5)
-    ax.set_title('Partisan metric values')
+    ax.set_title(f'Partisan metrics (calculated wrt {party_to_favor})')
     ax.set_xlabel('Steps on MCMC chain')
     ax.legend(['efficiency gap', 'mean median', 'partisan bias', 'partisan gini', 'mean thirdian'])
 
@@ -101,8 +101,8 @@ def plot_bias_metrics(data, partisan_metric_values, all_safe_seats, all_party_se
     ax.plot(np.arange(0, len(partisan_metric_values), 10), all_party_seats[::10], alpha=0.5)
     ax.legend(['safe seats', 'seats won'])
     ax.set_xlabel('Steps on MCMC chain')
-    ax.set_title('# of seats for ' + party_to_favor)
+    ax.set_title(f'# of seats for {party_to_favor}')
 
     plt.tight_layout()
     plt.savefig(fname+'.pdf', dpi=300, format='pdf')
-    plt.show()
+    plt.close()

@@ -5,11 +5,12 @@ import glob
 import csv
 from argparse import ArgumentParser
 
-def test_hypothesis(w_vals, epsilon, alpha, verbose=True):
-    m = w_vals.shape[0] # number of parallel trajectories
-    k = w_vals.shape[1] # number of steps in trajectory
+def test_hypothesis(w_vals, epsilon, alpha, verbose=True, k=None):
+    m = w_vals.shape[0]
+
+    if k is None:
+        k = w_vals.shape[1]
     
-    # are we checking only one metric or more?
     if len(w_vals.shape) > 2:
         mn = w_vals.shape[2]
     else:
@@ -19,10 +20,9 @@ def test_hypothesis(w_vals, epsilon, alpha, verbose=True):
         print(m, 'trajectories,', k, 'steps')
         print('epsilon', epsilon, 'alpha', alpha)
 
-    # how many are lower than the starting value?
-    counts = np.sum(w_vals[:, 1:, :] < w_vals[:, 0, :].reshape(m, 1, mn), axis=1)
-    rho_lower = np.sum(counts < epsilon*k, axis=0) # lower epsilon outlier
-    rho_upper = np.sum(counts > (1-epsilon)*k, axis=0) # upper epsilon outlier
+    counts = np.sum(w_vals[:, 1:k, :] < w_vals[:, 0, :].reshape(m, 1, mn), axis=1)
+    rho_lower = np.sum(counts < epsilon*k, axis=0)
+    rho_upper = np.sum(counts > (1-epsilon)*k, axis=0)
 
     # calculate p-value from Theorem 3.1
     r = rho_lower - m*np.sqrt(2*epsilon/alpha)
@@ -41,17 +41,17 @@ def test_hypothesis(w_vals, epsilon, alpha, verbose=True):
 def main(args):
     eps = [float(x) for x in args.e.split(",")]
     alphas = [float(x) for x in args.a.split(",")]
-    
+    k = args.k
+    if k is not None:
+        k = int(k)
+
     if os.path.isfile(args.fn):
-        # fn is a single file
         fns = [args.fn]
         csv_fn = args.fn[:-4]
     elif os.path.isdir(args.fn):
-        # if fn is a folder, take all pickle files in the folder
         fns = glob.glob(os.path.join(args.fn, "*.pkl"))
         csv_fn = args.fn + 'results'
     else:
-        # all files that match fn. can handle regex 
         fns = glob.glob(args.fn)
         csv_fn = args.fn[:-4]
 
@@ -63,7 +63,12 @@ def main(args):
 
     for ep in eps:
         for alpha in alphas:
-            with open(f"{csv_fn}_{ep}_{alpha}.csv", 'w', encoding='utf-8') as f:
+            if k is None:
+                csv_fn_full = f"{csv_fn}_{ep}_{alpha}.csv"
+            else:
+                csv_fn_full = f"{csv_fn}_{ep}_{alpha}_{k}.csv"
+
+            with open(csv_fn_full, 'w', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow(['map index']+  
                                 ['rho upper'] + ['']*len(metric_names) + ['p-value upper'] + ['']*len(metric_names) + 
@@ -71,7 +76,7 @@ def main(args):
                                 )
 
                 writer.writerow([''] + metric_names + [''] + metric_names + [''] + metric_names + [''] + metric_names)
-                print(f"{csv_fn}_{ep}_{alpha}.csv")
+                print(csv_fn_full)
                 
                 p_lower_count[(ep, alpha)] = 0
                 p_upper_count[(ep, alpha)] = 0 
@@ -88,25 +93,31 @@ def main(args):
         print(w_vals.shape)
         print(metric_names)
         print(res['w0'])
-#        print(np.array(res['counts']))
-        
         
         for ep in eps:
             for alpha in alphas:
-                (rho_upper, p_upper), (rho_lower, p_lower) = test_hypothesis(w_vals, ep, alpha)
+                (rho_upper, p_upper), (rho_lower, p_lower) = test_hypothesis(w_vals, ep, alpha, k=k)
                 print(p_upper <= alpha, p_lower <= alpha)
-                
-                # when is p-value less than alpha?
                 p_upper_count[(ep, alpha)] += p_upper <= alpha
                 p_lower_count[(ep, alpha)] += p_lower <= alpha
+                
+                if k is None:
+                    csv_fn_full = f"{csv_fn}_{ep}_{alpha}.csv"
+                else:
+                    csv_fn_full = f"{csv_fn}_{ep}_{alpha}_{k}.csv"
 
-                with open(f"{csv_fn}_{ep}_{alpha}.csv", 'a', encoding='utf-8') as f:
+                with open(csv_fn_full, 'a', encoding='utf-8') as f:
                     writer = csv.writer(f)
                     writer.writerow([map_idx] + list(rho_upper) + [''] + list(1*(p_upper <= alpha)) + ['']+ list(rho_lower) + [''] + list(1*(p_lower <= alpha)))
     
     for ep in eps:
         for alpha in alphas:
-            with open(f"{csv_fn}_{ep}_{alpha}.csv", 'a', encoding='utf-8') as f:
+            if k is None:
+                csv_fn_full = f"{csv_fn}_{ep}_{alpha}.csv"
+            else:
+                csv_fn_full = f"{csv_fn}_{ep}_{alpha}_{k}.csv"
+            
+            with open(csv_fn_full, 'a', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow(['total'] + ['']*(len(metric_names)+1) + list(p_upper_count[(ep, alpha)]) + ['']*(len(metric_names)+1) + ['']+ list(p_lower_count[(ep, alpha)])) 
     
@@ -117,6 +128,7 @@ if __name__ == "__main__":
         help="filename")
     parser.add_argument("--a", type=str, default="0.009,0.05", help="alpha seperated by comma")
     parser.add_argument("--e", type=str, default="0.003,0.001", help="epsilon seperated by comma")
+    parser.add_argument("--k", default=None, help="k if you don't want to run the test on the full chain")
     args = parser.parse_args()
 
     print(args)
