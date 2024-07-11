@@ -1,4 +1,16 @@
 # MRC Redistricting project
+## Software
+
+```python
+module load python/3.11.6
+python -m venv .venv
+source .venv/bin/activate
+pip install gerrychain
+pip install shapely==2.0.1
+pip install -r 'https://raw.githubusercontent.com/mggg/GerryChain/main/docs/requirements.txt'
+pip install descartes
+pip list
+```
 
 ## Structure
 This code relies heavily on consistent naming of the files.
